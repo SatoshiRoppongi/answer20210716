@@ -12,7 +12,15 @@ def dhash(a):
     """
     calculates a's double sha256
     """
-    return hashlib.sha256(hashlib.sha256(a.encode('utf-8')).hexdigest().encode('utf-8')).hexdigest()
+    return hashlib.sha256(hashlib.sha256(a.encode()).hexdigest().encode()).hexdigest()
+
+def convert_endian(hash):
+    # https://qiita.com/QUANON/items/e3d91a6f33536bd0de5a
+    hex_be = hash
+    bytes_be = bytes.fromhex(hex_be)
+    bytes_le = bytes_be[::-1]
+    hex_le = bytes_le.hex()
+    return hex_le
 
 def make_hash(hash_array):
     """
@@ -29,7 +37,10 @@ def make_hash(hash_array):
 
     parent_node = []
     while len(hash_array) != 0:
-        parent_node.append(dhash(dhash(hash_array.pop(0)) + dhash(hash_array.pop(0))))
+        left_child = dhash(convert_endian(hash_array.pop(0)))
+        right_child = dhash(convert_endian(hash_array.pop(0)))
+        new_hash = convert_endian(dhash(left_child + right_child))
+        parent_node.append(new_hash)
 
     return make_hash(parent_node)
 
